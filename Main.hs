@@ -37,12 +37,9 @@ reactOnCharacter :: Window -> Integer -> Char -> String -> [N.Host] -> Curses (M
 reactOnCharacter w selection c input hosts =
     if elem c $ allowedInput
     then showResult w 0 (input ++ [c]) hosts
-    else if (ord c) == 10
-        then do
-            return $ Just $ getHost selection hosts
-        else if (ord c) == 27
-             then return Nothing
-             else getInput w 0 input hosts
+    else case (ord c) of 10 -> return $ Just $ getHost selection hosts
+                         27 -> return Nothing
+                         _ -> getInput w 0 input hosts
 
 delChar :: String -> String
 delChar [] = []
@@ -129,4 +126,4 @@ main = do
     host <- goIntoCurses $ map (N.createHost . (:[])) lines
     case host of Nothing -> return ()
                  Just value -> runSsh login value
-    return ()
+
