@@ -1,11 +1,10 @@
 import System.Environment
 import UI.NCurses
-import qualified Dns as D
+import qualified Dns2 as D
 import qualified NGram as N
 import Data.Char(ord)
+import qualified Data.Set as S
 import System.Process
-
-data Args = Args {window :: Window, input :: String, hosts :: [N.Host]}
 
 inviteString = "Enter ur stuff: "
 allowedInput = ['a'..'z'] ++ ['0'..'9'] ++ ['-', '.']
@@ -121,9 +120,14 @@ runSsh login host = do
 	
 main :: IO ()
 main = do
-    (fileName:login:_) <- getArgs
-    lines <- D.parse fileName
-    host <- goIntoCurses $ map (N.createHost . (:[])) lines
-    case host of Nothing -> return ()
-                 Just value -> runSsh login value
+    args <- getArgs
+    if length args /= 2
+    then putStrLn "Usage: connector dns login"
+    else do
+        let fileName = head args
+            login = head $ tail args
+        lines <- D.parse fileName
+        host <- goIntoCurses $ map (N.createHost . S.toList) lines
+        case host of Nothing -> return ()
+                     Just value -> runSsh login value
 
