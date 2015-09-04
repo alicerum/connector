@@ -3,7 +3,7 @@ module NGram (Host, createHost, findCloseHosts, names) where
 import Data.List (sortBy)
 import qualified Data.Set as S
 
-data Host = Host {names :: [String], triGrams :: [String], biGrams :: [String]} deriving (Eq)
+data Host = Host {names :: [String], triGrams :: S.Set String, biGrams :: S.Set String} deriving (Eq)
 
 instance Show Host where
     show host = showHosts $ names host
@@ -33,14 +33,14 @@ countBiGrams (x:xs) = countSingleBiGrams x ++ countBiGrams xs
 createHost :: [String] -> Host
 createHost hosts =
         Host {names = hosts,
-                triGrams = countTriGrams hosts,
-                biGrams = countBiGrams hosts}
+                triGrams = S.fromList $ countTriGrams hosts,
+                biGrams = S.fromList $ countBiGrams hosts}
 
-countCommonGrams :: (Host -> [String]) -> Host -> Host -> Double
+countCommonGrams :: (Host -> S.Set String) -> Host -> Host -> Double
 countCommonGrams
         gramsFunc h1 h2 = fromIntegral $ S.size $ S.intersection
-                (S.fromList $ gramsFunc h1)
-                (S.fromList $ gramsFunc h2)
+                (gramsFunc h1)
+                (gramsFunc h2)
 
 countAllGrams :: Host -> Host -> Double
 countAllGrams h1 h2 =
