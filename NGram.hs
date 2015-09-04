@@ -10,9 +10,9 @@ instance Show Host where
 
 showHosts :: [String] -> String
 showHosts [] = ""
-showHosts (host:other) = host ++ "\t\t\t(" ++ showOther other ++ ")" where
-    showOther [] = ""
-    showOther (host:hosts) = host
+showHosts (host:other) = host ++ (showOther $ take 2 other) where
+    showOther [] = []
+    showOther hosts = "\t\t\t(" ++ (unwords hosts) ++ ")"
 
 countSingleTriGrams :: String -> [String]
 countSingleTriGrams str = map (\ (a, b, c) -> [a, b, c])
@@ -30,9 +30,12 @@ countBiGrams :: [String] -> [String]
 countBiGrams [] = []
 countBiGrams (x:xs) = countSingleBiGrams x ++ countBiGrams xs
 
+sortHosts :: String -> String -> Ordering
+sortHosts h1 h2 = compare (length h2) (length h1)
+
 createHost :: [String] -> Host
 createHost hosts =
-        Host {names = hosts,
+        Host {names = sortBy sortHosts hosts,
                 triGrams = S.fromList $ countTriGrams hosts,
                 biGrams = S.fromList $ countBiGrams hosts}
 
