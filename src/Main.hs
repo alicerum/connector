@@ -127,7 +127,10 @@ main = do
         let fileName = head args
             login = head $ tail args
         lines <- D.parse fileName
-        host <- goIntoCurses $ map (N.createHost . S.toList) lines
-        case host of Nothing -> return ()
-                     Just value -> runSsh login value
+        if null lines
+        then putStrLn "Dns file empty or does not exist"
+        else do
+            host <- goIntoCurses $ map (N.createHost . S.toList) lines
+            case host of Nothing -> return ()
+                         Just value -> runSsh login value
 
