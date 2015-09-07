@@ -25,7 +25,7 @@ addAlias hosts h1 h2 = hostListToMap $ findInsert (M.toList hosts) h1 h2 where
     findInsert [] h1 h2 = []
     findInsert (record:others) h1 h2 = appendHost record h1 h2 : findInsert others h1 h2 where
         appendHost (ip, set) h1 h2 = if S.member h2 set
-                                     then (ip, (S.insert h1 set))
+                                     then (ip, S.insert h1 set)
                                      else (ip, set)
 
 getPart :: String -> String
@@ -56,7 +56,7 @@ processLine hosts line = case lookup (head line) dnsProcessors of
     Just processor -> processor hosts (tail line)
 
 process :: [String] -> HostMap
-process = foldl (\ acc v -> processLine acc v) emptyMap
+process = foldl processLine emptyMap
 
 parse :: String -> IO [S.Set String]
 parse fileName = do

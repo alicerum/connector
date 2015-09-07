@@ -7,7 +7,7 @@ import System.Directory
 import qualified Data.Set as S
 
 dnsTypeProcessors :: [(Char, String -> [String])]
-dnsTypeProcessors = 
+dnsTypeProcessors =
 	[('C', processAlias)]
 
 processAlias :: String -> [String]
@@ -19,13 +19,13 @@ processAlias line = [first, last]
 
 processLine :: String -> Maybe [String]
 processLine [] = Nothing
-processLine line = 
-    case (lookup (head line) dnsTypeProcessors) of
+processLine line =
+    case lookup (head line) dnsTypeProcessors of
         Nothing -> Nothing
         Just processor -> Just (processor $ tail line)
 
 createSets :: [String] -> [S.Set String]
-createSets lines = createListOfSets [] lines where
+createSets = createListOfSets [] where
     createListOfSets list [] = list
     createListOfSets list (line:other) = case processLine line of
         Nothing -> createListOfSets list other
