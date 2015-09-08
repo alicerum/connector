@@ -5,20 +5,20 @@ import qualified NGram as N
 import Data.Char(ord)
 import qualified Data.Set as S
 import System.Process
+import Control.Monad (when, unless)
+import Data.Foldable as Foldable (forM_)
 
 inviteString = "Enter ur stuff: "
-allowedInput = ['a'..'z'] ++ ['0'..'9'] ++ ['-', '.']
+allowedInput = ['a'..'z'] ++ ['0'..'9'] ++ "-."
 
 showResult :: Window -> Integer -> String -> [N.Host] -> Curses (Maybe N.Host)
 showResult w selection input hosts = do
     (rows, cols) <- screenSize
     let closeHosts = N.findCloseHosts input hosts
     updateWindow w $ do
-        if (length input) > 2
-        then do
+        when (length input > 2) $ do
             clearHosts w rows cols
             drawHosts selection (take (fromIntegral (rows-1)) closeHosts) 1
-        else return ()
         moveCursor 0 0
         drawString $ replicate (fromIntegral (rows-1)) ' '
         moveCursor 0 0
@@ -30,15 +30,16 @@ getHost :: Integer -> [N.Host] -> N.Host
 getHost sel hosts =
     if sel == 0
     then head hosts
-    else hosts !! (fromIntegral $ sel - 1)
+    else hosts !! fromIntegral (sel - 1)
 
 reactOnCharacter :: Window -> Integer -> Char -> String -> [N.Host] -> Curses (Maybe N.Host)
 reactOnCharacter w selection c input hosts =
-    if elem c $ allowedInput
+    if c `elem` allowedInput
     then showResult w 0 (input ++ [c]) hosts
-    else case (ord c) of 10 -> return $ Just $ getHost selection hosts
-                         27 -> return Nothing
-                         _ -> getInput w 0 input hosts
+    else case ord c of
+        10 -> return $ Just $ getHost selection hosts
+        27 -> return Nothing
+        _  -> getInput w 0 input hosts
 
 delChar :: String -> String
 delChar [] = []
@@ -78,28 +79,23 @@ getInput w selection curInput hosts = loop where
             Just ev' -> reactOnEvent w selection ev' curInput hosts
 
 clearHostLines :: Integer -> Integer -> Integer -> Update ()
-clearHostLines curRow rows columns = do
-    if (curRow+1) == rows
-    then return ()
-    else do
+clearHostLines curRow rows columns =
+    unless ((curRow+1) == rows) $ do
         moveCursor curRow 0
-        drawString $ take (fromIntegral columns) $ repeat ' '
+        drawString $ replicate (fromInteger columns) ' '
         clearHostLines (curRow+1) rows columns
 
 clearHosts :: Window -> Integer -> Integer -> Update ()
-clearHosts w rows cols = do
-    clearHostLines 1 rows cols
+clearHosts w = clearHostLines 1
 
 drawHosts :: Integer ->[N.Host] -> Integer -> Update ()
 drawHosts _ [] _ = return ()
 drawHosts selection (host:other) line = do
     moveCursor line 3
     drawString $ show host
-    if selection == line
-    then do
+    when (selection == line) $ do
         moveCursor line 0
         drawString "*"
-    else return ()
     drawHosts selection other (line+1)
 
 goIntoCurses :: [N.Host] -> IO (Maybe N.Host)
@@ -110,12 +106,11 @@ goIntoCurses hosts = runCurses $ do
         moveCursor 0 0
         drawString inviteString
     render
-    host <- getInput w 0 "" hosts
-    return host
+    getInput w 0 "" hosts
 
 runSsh :: String -> N.Host -> IO ()
 runSsh login host = do
-    code <- system $ "ssh " ++ login ++ "@" ++ (head $ N.names host)
+    code <- system $ "ssh " ++ login ++ "@" ++ head (N.names host)
     return ()
 	
 main :: IO ()
@@ -131,6 +126,4 @@ main = do
         then putStrLn "Dns file empty or does not exist"
         else do
             host <- goIntoCurses $ map (N.createHost . S.toList) lines
-            case host of Nothing -> return ()
-                         Just value -> runSsh login value
-
+            Foldable.forM_ host (runSsh login)

@@ -10,25 +10,24 @@ instance Show Host where
 
 showHosts :: [String] -> String
 showHosts [] = ""
-showHosts (host:other) = host ++ (showOther $ take 2 other) where
+showHosts (host:other) = host ++ showOther (take 2 other) where
     showOther [] = []
-    showOther hosts = "\t\t\t(" ++ (unwords hosts) ++ ")"
+    showOther hosts = "\t\t\t(" ++ unwords hosts ++ ")"
 
 countSingleTriGrams :: String -> [String]
 countSingleTriGrams str = map (\ (a, b, c) -> [a, b, c])
         $ zip3 str (tail str) (tail $ tail str)
 
 countTriGrams :: [String] -> [String]
-countTriGrams [] = []
-countTriGrams (x:xs) = countSingleTriGrams x ++ countTriGrams xs
+countTriGrams = foldr ((++) . countSingleTriGrams) []
 
 countSingleBiGrams :: String -> [String]
 countSingleBiGrams str = map (\ (a, b) -> [a, b])
         $ zip str (tail str)
 
 countBiGrams :: [String] -> [String]
-countBiGrams [] = []
-countBiGrams (x:xs) = countSingleBiGrams x ++ countBiGrams xs
+countBiGrams = foldr ((++) . countSingleBiGrams) []
+
 
 sortHosts :: String -> String -> Ordering
 sortHosts h1 h2 = compare (length h2) (length h1)
@@ -47,8 +46,8 @@ countCommonGrams
 
 countAllGrams :: Host -> Host -> Double
 countAllGrams h1 h2 =
-        (countCommonGrams triGrams h1 h2) 
-                + (countCommonGrams biGrams h1 h2) * 0.001
+        countCommonGrams triGrams h1 h2
+                + countCommonGrams biGrams h1 h2 * 0.001
 
 sortFunction :: Host -> Host -> Host -> Ordering
 sortFunction inputHost h1 h2 =
@@ -57,7 +56,7 @@ sortFunction inputHost h1 h2 =
                 d2 = countAllGrams inputHost h2
 
 findCloseHosts :: String -> [Host] -> [Host]
-findCloseHosts input hosts =
-        sortBy (sortFunction inputHost) hosts
+findCloseHosts input =
+        sortBy (sortFunction inputHost)
             where inputHost = createHost [input]
 
