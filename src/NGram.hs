@@ -1,4 +1,4 @@
-module NGram (Host, createHost, findCloseHosts, names) where
+module NGram (Host, createHost, findCloseHosts, names, showHosts) where
 
 import Data.List (sortBy)
 import qualified Data.Set as S
