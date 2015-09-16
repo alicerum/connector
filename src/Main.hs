@@ -1,6 +1,6 @@
 import System.Environment
 import UI.NCurses
-import qualified Dns2 as D
+import qualified Dns as D
 import qualified NGram as N
 import Data.Char(ord)
 import qualified Data.Set as S
